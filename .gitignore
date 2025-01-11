@@ -13,7 +13,7 @@
 /examples/nli/scone/ScoNe/
 /examples/nli/scone/compiled_program.dspy
 /examples/qa/hotpot/compiled_program.dspy
-/ScoNe/
+dspy/benchmarks/datasets/ScoNe/
 dspy/benchmark/outputs/
 dspy/benchmark/playbook.ipynb
 

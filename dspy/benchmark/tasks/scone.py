@@ -1,6 +1,7 @@
 import glob
 import os
 import random
+from pathlib import Path
 
 import pandas as pd
 
@@ -13,7 +14,7 @@ def load_scone(dirname):
     dfs = []
     for filename in glob.glob(dirname + "/*.csv"):
         df = pd.read_csv(filename, index_col=0)
-        df["category"] = os.path.basename(filename).replace(".csv", "")
+        df["category"] = Path(filename).stem
         dfs.append(df)
     data_df = pd.concat(dfs)
 
@@ -65,11 +66,12 @@ class ScoNeTask(BaseTask):
 
     def load_dataset(self):
         # !git clone https://github.com/selenashe/ScoNe.git
-        if not os.path.exists("ScoNe"):
-            os.system("git clone https://github.com/selenashe/ScoNe.git")
+        dataset_dir = Path(__file__).parent.parent / "datasets" / "ScoNe"
+        if not dataset_dir.exists():
+            os.system(f"git clone https://github.com/selenashe/ScoNe.git {dataset_dir}")
 
         # Load and configure the datasets.
-        all_train = load_scone("ScoNe/scone_nli/train")
+        all_train = load_scone(dataset_dir / "scone_nli" / "train")
 
         random.seed(1)
         random.shuffle(all_train)
