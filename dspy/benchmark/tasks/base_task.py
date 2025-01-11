@@ -24,6 +24,9 @@ class BaseTask(ABC):
         if hasattr(self, "devset"):
             return self.devset[:DEV_NUM]
 
+        if DEV_NUM is None:
+            return self.trainset
+
         return self.trainset[-DEV_NUM:]
 
     def get_testset(self, TEST_NUM=None):
