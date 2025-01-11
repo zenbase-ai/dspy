@@ -3,9 +3,6 @@ import datetime
 import os
 from timeit import default_timer as timer
 
-import openai
-from dotenv import load_dotenv
-
 import dspy
 from dspy.evaluate import Evaluate
 
