@@ -8,11 +8,13 @@ import dspy
 class Sig(dspy.Signature):
     "Given the petal and sepal dimensions in cm, predict the iris species."
 
+    # "Given the petal and sepal dimensions in cm, predict the iris species. If petal_width < 1.0, setosa. Otherwise, if petal_width < 1.65, versicolor. Otherwise, virginica."
+
     petal_length = dspy.InputField()
     petal_width = dspy.InputField()
     sepal_length = dspy.InputField()
     sepal_width = dspy.InputField()
-    answer = dspy.OutputField(desc="setosa, versicolor, or virginica")
+    answer = dspy.OutputField(desc="setosa, versicolour, or virginica")
 
 
 class Classify(dspy.Module):
@@ -28,15 +30,21 @@ class Classify(dspy.Module):
         )
 
 
-class IrisClassifierTask(BaseTask):
+class IrisTypoClassifierTask(BaseTask):
     def __init__(self):
+        # Set up metrics
+        # TODO: set up metrics
+        self.metric = dspy.evaluate.answer_exact_match
+        # NUM_THREADS = 16
+        # kwargs = dict(num_threads=NUM_THREADS, display_progress=True, display_table=15)
+
+        self.set_splits(TRAIN_NUM=25, DEV_NUM=55, TEST_NUM=100)
+
+    def load_dataset(self):
         # Read in the conditional HotpotQA dataset from nfl_datasets as a csv from nfl_datasets/conditional_hotpotqa
         dataset = load_dataset("hitorilabs/iris")
 
-        fullset = [
-            dspy.Example(**{k: str(round(v, 2)) for k, v in example.items()})
-            for example in dataset["train"]
-        ]
+        fullset = [dspy.Example(**{k: str(round(v, 2)) for k, v in example.items()}) for example in dataset["train"]]
         fullset = [
             dspy.Example(
                 **{
@@ -46,24 +54,10 @@ class IrisClassifierTask(BaseTask):
             )
             for x in fullset
         ]
-        fullset = [
-            x.with_inputs("petal_length", "petal_width", "sepal_length", "sepal_width")
-            for x in fullset
-        ]
+        fullset = [x.with_inputs("petal_length", "petal_width", "sepal_length", "sepal_width") for x in fullset]
 
         random.Random(0).shuffle(fullset)
-        # self.trainset, self.devset, self.testset = fullset[:25], fullset[20:75], fullset[75:]
         self.trainset, self.testset = fullset[:75], fullset[75:]
-
-        # Set up metrics
-        NUM_THREADS = 16
-
-        # TODO: set up metrics
-        self.metric = dspy.evaluate.answer_exact_match
-
-        kwargs = dict(num_threads=NUM_THREADS, display_progress=True, display_table=15)
-
-        self.set_splits(TRAIN_NUM=25, DEV_NUM=55, TEST_NUM=100)
 
     def get_program(self):
         return Classify()

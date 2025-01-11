@@ -14,7 +14,7 @@ class MultiHop(dspy.Module):
 
     def forward(self, question):
         context = []
-        for hop in range(2):
+        for _hop in range(2):
             query = self.generate_query(context=context, question=question).search_query
             context += self.retrieve(query).passages
         return dspy.Prediction(
@@ -25,12 +25,6 @@ class MultiHop(dspy.Module):
 
 class HotPotQATask(BaseTask):
     def __init__(self):
-        # Load and configure the datasets.
-        hotpot_dataset = HotPotQA(train_seed=1, eval_seed=2023)
-
-        self.trainset = [x.with_inputs("question") for x in hotpot_dataset.train]
-        self.testset = [x.with_inputs("question") for x in hotpot_dataset.dev]
-
         # Set up metrics
         NUM_THREADS = 16
 
@@ -49,11 +43,16 @@ class HotPotQATask(BaseTask):
 
         kwargs = dict(num_threads=NUM_THREADS, display_progress=True, display_table=15)
         self.evaluate_EM = Evaluate(devset=self.trainset, metric=metric_EM, **kwargs)
-        self.evaluate_retrieval = Evaluate(
-            devset=self.trainset, metric=gold_passages_retrieved, **kwargs
-        )
+        self.evaluate_retrieval = Evaluate(devset=self.trainset, metric=gold_passages_retrieved, **kwargs)
 
         self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
+
+    def load_dataset(self):
+        # Load and configure the datasets.
+        hotpot_dataset = HotPotQA(train_seed=1, eval_seed=2023)
+
+        self.trainset = [x.with_inputs("question") for x in hotpot_dataset.train]
+        self.testset = [x.with_inputs("question") for x in hotpot_dataset.dev]
 
     def get_program(self):
         return MultiHop(passages_per_hop=3)

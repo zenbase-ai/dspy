@@ -59,6 +59,17 @@ class RetrieveMultiHop(dspy.Module):
 
 class HoverRetrieveDiscrete(BaseTask):
     def __init__(self):
+        # Set up metrics
+        NUM_THREADS = 16
+
+        self.metric = discrete_retrieval_eval
+
+        kwargs = dict(num_threads=NUM_THREADS, display_progress=True, display_table=15)
+        self.evaluate = Evaluate(devset=self.trainset, metric=self.metric, **kwargs)
+
+        self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
+
+    def load_dataset(self):
         dataset = load_dataset("hover")
 
         hf_trainset = dataset["train"]
@@ -93,16 +104,6 @@ class HoverRetrieveDiscrete(BaseTask):
 
         self.trainset = [dspy.Example(**x).with_inputs("claim") for x in trainset]
         self.testset = [dspy.Example(**x).with_inputs("claim") for x in testset]
-
-        # Set up metrics
-        NUM_THREADS = 16
-
-        self.metric = discrete_retrieval_eval
-
-        kwargs = dict(num_threads=NUM_THREADS, display_progress=True, display_table=15)
-        self.evaluate = Evaluate(devset=self.trainset, metric=self.metric, **kwargs)
-
-        self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
 
     def get_program(self):
         return RetrieveMultiHop()

@@ -6,6 +6,7 @@ import subprocess
 
 from datasets import Dataset
 from typing import Any, Dict, List, Optional
+from dspy import LM
 from dspy.clients.provider import TrainingJob, Provider
 from dspy.clients.utils_finetune import DataFormat, TrainingStatus, save_data
 
@@ -291,7 +292,7 @@ def train_sft_locally(model_name, train_data, train_kwargs):
     gc.collect()
     torch.cuda.empty_cache()
 
-    return output_dir
+    return sft_config.output_dir
 
 
 def get_free_port() -> int:

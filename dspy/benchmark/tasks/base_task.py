@@ -6,6 +6,10 @@ class BaseTask(ABC):
         pass
 
     @abstractmethod
+    def load_dataset(self):
+        pass
+
+    @abstractmethod
     def get_program(self):
         pass
 
@@ -14,6 +18,9 @@ class BaseTask(ABC):
         pass
 
     def get_trainset(self, TRAIN_NUM=None):
+        if not hasattr(self, "trainset"):
+            self.load_dataset()
+
         if TRAIN_NUM:
             self.TRAIN_NUM = TRAIN_NUM
             return self.trainset[:TRAIN_NUM]
@@ -21,6 +28,9 @@ class BaseTask(ABC):
             return self.trainset[: self.TRAIN_NUM]
 
     def get_devset(self, TRAIN_NUM=None, DEV_NUM=None):
+        if not hasattr(self, "trainset"):
+            self.load_dataset()
+
         if TRAIN_NUM:
             self.TRAIN_NUM = TRAIN_NUM
         if DEV_NUM:
@@ -34,6 +44,9 @@ class BaseTask(ABC):
         return self.trainset[index:]
 
     def get_testset(self, TEST_NUM=None):
+        if not hasattr(self, "testset"):
+            self.load_dataset()
+
         if TEST_NUM:
             self.TEST_NUM = TEST_NUM
             return self.testset[:TEST_NUM]

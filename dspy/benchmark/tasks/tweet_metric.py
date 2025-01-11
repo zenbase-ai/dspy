@@ -14,7 +14,7 @@ from .base_task import BaseTask
 
 
 class TweetSignature(dspy.Signature):
-    ("""Given context and a question, answer with a tweet""")
+    """Given context and a question, answer with a tweet"""
 
     context = dspy.InputField()
     question = dspy.InputField()
@@ -39,7 +39,7 @@ class MultiHopTweet(dspy.Module):
 
     def forward(self, question):
         context = []
-        for hop in range(2):
+        for _hop in range(2):
             query = self.generate_query(context=context, question=question).search_query
             context += self.retrieve(query).passages
         return dspy.Prediction(
@@ -85,32 +85,23 @@ def metric(gold, pred, trace=None):
     score_pred = pred.score
 
     engaging = "Does the assessed text make for a self-contained, engaging tweet?"
-    faithful = "Is the assessed text grounded in the context? Say no if it includes significant facts not in the context."
-    correct = (
-        f"The text above is should answer `{question}`. The gold answer is `{answer}`."
+    faithful = (
+        "Is the assessed text grounded in the context? Say no if it includes significant facts not in the context."
     )
+    correct = f"The text above is should answer `{question}`. The gold answer is `{answer}`."
     correct = f"{correct} Does the assessed text above contain the gold answer?"
 
     with dspy.context(lm=gpt3T):  # TODO Update to GPT4
-        faithful = dspy.Predict(Assess)(
-            context=context, assessed_text=tweet, assessment_question=faithful
-        )
-        correct = dspy.Predict(Assess)(
-            context="N/A", assessed_text=tweet, assessment_question=correct
-        )
-        engaging = dspy.Predict(Assess)(
-            context="N/A", assessed_text=tweet, assessment_question=engaging
-        )
+        faithful = dspy.Predict(Assess)(context=context, assessed_text=tweet, assessment_question=faithful)
+        correct = dspy.Predict(Assess)(context="N/A", assessed_text=tweet, assessment_question=correct)
+        engaging = dspy.Predict(Assess)(context="N/A", assessed_text=tweet, assessment_question=engaging)
 
     correct, engaging, faithful = (
-        m.assessment_answer.split()[0].lower() == "yes"
-        for m in [correct, engaging, faithful]
+        m.assessment_answer.split()[0].lower() == "yes" for m in [correct, engaging, faithful]
     )
     score = (correct + engaging + faithful) if correct and (len(tweet) <= 280) else 0
 
-    return 1 - abs(
-        score - score_pred
-    )  # We want a score we can maximize, so take the negative L1 norm and add 1
+    return 1 - abs(score - score_pred)  # We want a score we can maximize, so take the negative L1 norm and add 1
 
 
 class TweetMetric(dspy.Module):
@@ -122,34 +113,26 @@ class TweetMetric(dspy.Module):
 
     def forward(self, tweet, context, question, answer):
         engaging = "Does the assessed text make for a self-contained, engaging tweet?"
-        faithful = "Is the assessed text grounded in the context? Say no if it includes significant facts not in the context."
+        faithful = (
+            "Is the assessed text grounded in the context? Say no if it includes significant facts not in the context."
+        )
         correct = f"The text above is should answer `{question}`. The gold answer is `{answer}`."
         correct = f"{correct} Does the assessed text above contain the gold answer?"
 
-        faithful = self.faithful(
-            context=context, assessed_text=tweet, assessment_question=faithful
-        )
-        correct = self.correct(
-            context="N/A", assessed_text=tweet, assessment_question=correct
-        )
-        engaging = self.engaging(
-            context="N/A", assessed_text=tweet, assessment_question=engaging
-        )
+        faithful = self.faithful(context=context, assessed_text=tweet, assessment_question=faithful)
+        correct = self.correct(context="N/A", assessed_text=tweet, assessment_question=correct)
+        engaging = self.engaging(context="N/A", assessed_text=tweet, assessment_question=engaging)
 
         correct, engaging, faithful = (
-            m.assessment_answer.split()[0].lower() == "yes"
-            for m in [correct, engaging, faithful]
+            m.assessment_answer.split()[0].lower() == "yes" for m in [correct, engaging, faithful]
         )
-        score = (
-            (correct + engaging + faithful) if correct and (len(tweet) <= 280) else 0
-        )
+        score = (correct + engaging + faithful) if correct and (len(tweet) <= 280) else 0
 
         return dspy.Prediction(score=score / 3.0)
 
 
 class TweetMetricTask(BaseTask):
     def __init__(self):
-
         # Load the dataset.
         dataset = HotPotQA(
             train_seed=1,
@@ -161,12 +144,8 @@ class TweetMetricTask(BaseTask):
         )
 
         # Tell DSPy that the 'question' field is the input. Any other fields are labels and/or metadata.
-        trainset_temp = [
-            x.without("id", "type").with_inputs("question") for x in dataset.train
-        ]
-        devset_temp = [
-            x.without("id", "type").with_inputs("question") for x in dataset.dev
-        ]
+        trainset_temp = [x.without("id", "type").with_inputs("question") for x in dataset.train]
+        devset_temp = [x.without("id", "type").with_inputs("question") for x in dataset.dev]
         self.trainset = []
         self.testset = []
 
@@ -186,9 +165,9 @@ class TweetMetricTask(BaseTask):
                 }
 
                 self.trainset.append(
-                    Example(
-                        **example, dspy_uuid=str(uuid.uuid4()), dspy_split="train"
-                    ).with_inputs("context", "question", "answer", "tweet")
+                    Example(**example, dspy_uuid=str(uuid.uuid4()), dspy_split="train").with_inputs(
+                        "context", "question", "answer", "tweet"
+                    )
                 )
 
             for ex in tqdm(devset_temp, desc="Preprocessing Devset"):
@@ -204,9 +183,9 @@ class TweetMetricTask(BaseTask):
                 }
 
                 self.testset.append(
-                    Example(
-                        **example, dspy_uuid=str(uuid.uuid4()), dspy_split="dev"
-                    ).with_inputs("context", "question", "answer", "tweet")
+                    Example(**example, dspy_uuid=str(uuid.uuid4()), dspy_split="dev").with_inputs(
+                        "context", "question", "answer", "tweet"
+                    )
                 )
 
         self.metric = metric

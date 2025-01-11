@@ -40,7 +40,7 @@ def load_scone(dirname):
 
 
 class ScoNeSignature(dspy.Signature):
-    ("""context, question -> answer""")
+    """context, question -> answer"""
 
     context = dspy.InputField()
     question = dspy.InputField()
@@ -58,6 +58,12 @@ class ScoNeCoT(dspy.Module):
 
 class ScoNeTask(BaseTask):
     def __init__(self):
+        metric_EM = dspy.evaluate.answer_exact_match
+        self.metric = metric_EM
+
+        self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
+
+    def load_dataset(self):
         # !git clone https://github.com/selenashe/ScoNe.git
         if not os.path.exists("ScoNe"):
             os.system("git clone https://github.com/selenashe/ScoNe.git")
@@ -70,11 +76,6 @@ class ScoNeTask(BaseTask):
 
         # 1000 random train, 500 random dev:
         self.trainset, self.testset = all_train[:1000], all_train[1000:1500]
-
-        metric_EM = dspy.evaluate.answer_exact_match
-        self.metric = metric_EM
-
-        self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
 
     def get_program(self):
         return ScoNeCoT()

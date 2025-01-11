@@ -1,6 +1,4 @@
 import dspy
-from dspy.datasets import HotPotQA
-from dspy.evaluate import Evaluate
 import pandas as pd
 import os
 from .base_task import BaseTask
@@ -14,9 +12,7 @@ def preprocess_text(text):
     text = text.lower()
     # Remove 'peace!' from the end if it exists
     if text.endswith("peace!"):
-        text = text[
-            :-6
-        ].strip()  # Remove the last 'peace!' and strip any trailing spaces
+        text = text[:-6].strip()  # Remove the last 'peace!' and strip any trailing spaces
     return text
 
 
@@ -41,9 +37,7 @@ def check_conditions(example, pred, trace=None, debug=False):
     # Check for exact match after preprocessing
     if preprocessed_pred_answer != preprocessed_correct_answer:
         if debug:
-            print(
-                f"Exact match failed. Expected: '{preprocessed_correct_answer}', Got: '{preprocessed_pred_answer}'"
-            )
+            print(f"Exact match failed. Expected: '{preprocessed_correct_answer}', Got: '{preprocessed_pred_answer}'")
         return False
 
     # When the answer is a place, the response should contain no punctuation
@@ -52,9 +46,7 @@ def check_conditions(example, pred, trace=None, debug=False):
             return False
         else:
             if debug:
-                print(
-                    f"Place. When the answer is a place, the response should contain no punctuation {answer}"
-                )
+                print(f"Place. When the answer is a place, the response should contain no punctuation {answer}")
             return True
 
     # When the answer is a date, the response should end with "Peace!"
@@ -63,9 +55,7 @@ def check_conditions(example, pred, trace=None, debug=False):
             return False
         else:
             if debug:
-                print(
-                    f"Date. When the answer is a date, the response should end with Peace! {answer}"
-                )
+                print(f"Date. When the answer is a date, the response should end with Peace! {answer}")
             return True
 
     # When the answer is a person, the response should be entirely in lowercase
@@ -74,9 +64,7 @@ def check_conditions(example, pred, trace=None, debug=False):
             return False
         else:
             if debug:
-                print(
-                    f"Answer. When the answer is a person, the response should be entirely in lowercase {answer}"
-                )
+                print(f"Answer. When the answer is a person, the response should be entirely in lowercase {answer}")
             return True
 
     # When the answer is none of the above categories, the response should be in all caps and not end with "Peace!"
@@ -85,9 +73,7 @@ def check_conditions(example, pred, trace=None, debug=False):
             return False
         else:
             if debug:
-                print(
-                    f"Other category. the response should be in all caps and not end with Peace! {answer}"
-                )
+                print(f"Other category. the response should be in all caps and not end with Peace! {answer}")
             return True
 
 
@@ -137,21 +123,25 @@ class MultiHopHandwritten(dspy.Module):
 
 class HotPotQAConditionalTask(BaseTask):
     def __init__(self):
+        # Set up metrics
+
+        # TODO: set up metrics
+        self.metric = check_conditions
+        # NUM_THREADS = 16
+        # kwargs = dict(num_threads=NUM_THREADS, display_progress=True, display_table=15)
+
+        self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
+
+    def load_dataset(self):
         # Read in the conditional HotpotQA dataset from nfl_datasets as a csv from nfl_datasets/conditional_hotpotqa
 
         # Get the directory where this script is located
         script_dir = os.path.dirname(os.path.abspath(__file__))
 
         # Construct the absolute paths to the datasets
-        hotpotqa_train_path = os.path.join(
-            script_dir, "../datasets/hotpotqa_conditional/hotpot_train.csv"
-        )
-        hotpotqa_dev_path = os.path.join(
-            script_dir, "../datasets/hotpotqa_conditional/hotpot_dev.csv"
-        )
-        hotpotqa_test_path = os.path.join(
-            script_dir, "../datasets/hotpotqa_conditional/hotpot_test.csv"
-        )
+        hotpotqa_train_path = os.path.join(script_dir, "../datasets/hotpotqa_conditional/hotpot_train.csv")
+        hotpotqa_dev_path = os.path.join(script_dir, "../datasets/hotpotqa_conditional/hotpot_dev.csv")
+        hotpotqa_test_path = os.path.join(script_dir, "../datasets/hotpotqa_conditional/hotpot_test.csv")
 
         # Read the datasets
         hotpotqa_train = pd.read_csv(hotpotqa_train_path)
@@ -167,7 +157,7 @@ class HotPotQAConditionalTask(BaseTask):
                 answer=row["answer"],
                 category=row["answer category"],
             ).with_inputs("question")
-            for index, row in combined_train.iterrows()
+            for _, row in combined_train.iterrows()
         ]
         self.testset = [
             dspy.Example(
@@ -175,18 +165,8 @@ class HotPotQAConditionalTask(BaseTask):
                 answer=row["answer"],
                 category=row["answer category"],
             ).with_inputs("question")
-            for index, row in hotpotqa_test.iterrows()
+            for _, row in hotpotqa_test.iterrows()
         ]
-
-        # Set up metrics
-        NUM_THREADS = 16
-
-        # TODO: set up metrics
-        self.metric = check_conditions
-
-        kwargs = dict(num_threads=NUM_THREADS, display_progress=True, display_table=15)
-
-        self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
 
     def get_program(self):
         return MultiHop(passages_per_hop=3)

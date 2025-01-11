@@ -20,6 +20,10 @@ class CoT(dspy.Module):
 
 class GSM8KTask(BaseTask):
     def __init__(self):
+        self.metric = gsm8k_metric
+        self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
+
+    def load_dataset(self):
         dataset = load_dataset("gsm8k", "main")
 
         hf_official_train = dataset["train"]
@@ -36,9 +40,7 @@ class GSM8KTask(BaseTask):
             gold_reasoning = " ".join(answer[:-2])
             answer = str(int(answer[-1].replace(",", "")))
 
-            official_train.append(
-                dict(question=question, gold_reasoning=gold_reasoning, answer=answer)
-            )
+            official_train.append(dict(question=question, gold_reasoning=gold_reasoning, answer=answer))
 
         for example in tqdm.tqdm(hf_official_test):
             question = example["question"]
@@ -49,9 +51,7 @@ class GSM8KTask(BaseTask):
             gold_reasoning = " ".join(answer[:-2])
             answer = str(int(answer[-1].replace(",", "")))
 
-            official_test.append(
-                dict(question=question, gold_reasoning=gold_reasoning, answer=answer)
-            )
+            official_test.append(dict(question=question, gold_reasoning=gold_reasoning, answer=answer))
 
         rng = random.Random(0)
         rng.shuffle(official_train)
@@ -70,9 +70,6 @@ class GSM8KTask(BaseTask):
         self.trainset = trainset
         self.devset = devset
         self.testset = testset
-        self.metric = gsm8k_metric
-
-        self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
 
     def get_program(self):
         return CoT()
