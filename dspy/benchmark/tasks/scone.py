@@ -10,9 +10,9 @@ import dspy
 from .base_task import BaseTask
 
 
-def load_scone(dirname):
+def load_scone(dirname: Path):
     dfs = []
-    for filename in glob.glob(dirname + "/*.csv"):
+    for filename in dirname.glob("*.csv"):
         df = pd.read_csv(filename, index_col=0)
         df["category"] = Path(filename).stem
         dfs.append(df)
