@@ -26,10 +26,19 @@ class MultiHop(dspy.Module):
 class HotPotQATask(BaseTask):
     def __init__(self):
         # Set up metrics
-        NUM_THREADS = 16
-
         metric_EM = dspy.evaluate.answer_exact_match
         self.metric = metric_EM
+
+        self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
+
+    def load_dataset(self):
+        # Load and configure the datasets.
+        hotpot_dataset = HotPotQA(train_seed=1, eval_seed=2023)
+
+        self.trainset = [x.with_inputs("question") for x in hotpot_dataset.train]
+        self.testset = [x.with_inputs("question") for x in hotpot_dataset.dev]
+
+        NUM_THREADS = 16
 
         def gold_passages_retrieved(example, pred, trace=None):
             gold_titles = set(map(dspy.evaluate.normalize_text, example["gold_titles"]))
@@ -42,17 +51,8 @@ class HotPotQATask(BaseTask):
             return gold_titles.issubset(found_titles)
 
         kwargs = dict(num_threads=NUM_THREADS, display_progress=True, display_table=15)
-        self.evaluate_EM = Evaluate(devset=self.trainset, metric=metric_EM, **kwargs)
+        self.evaluate_EM = Evaluate(devset=self.trainset, metric=self.metric, **kwargs)
         self.evaluate_retrieval = Evaluate(devset=self.trainset, metric=gold_passages_retrieved, **kwargs)
-
-        self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
-
-    def load_dataset(self):
-        # Load and configure the datasets.
-        hotpot_dataset = HotPotQA(train_seed=1, eval_seed=2023)
-
-        self.trainset = [x.with_inputs("question") for x in hotpot_dataset.train]
-        self.testset = [x.with_inputs("question") for x in hotpot_dataset.dev]
 
     def get_program(self):
         return MultiHop(passages_per_hop=3)
