@@ -121,39 +121,39 @@ class OptimizerTester:
             # Write the data
             writer.writerow(formatted_data)
 
-    def load_dataset(self, dataset):
-        ds = None
+    def load_task(self, dataset):
+        task = None
         dataset = dataset.lower()
         if dataset == "scone":
-            ds = ScoNeTask()
+            task = ScoNeTask()
         elif dataset == "hotpotqa":
-            ds = HotPotQATask()
+            task = HotPotQATask()
         elif dataset == "hotpotqa_conditional":
-            ds = HotPotQAConditionalTask()
+            task = HotPotQAConditionalTask()
         elif dataset == "gsm8k":
-            ds = GSM8KTask()
+            task = GSM8KTask()
         elif dataset == "tweet":
-            ds = TweetTask()
+            task = TweetTask()
         elif dataset == "heart_disease":
-            ds = HeartDiseaseTask()
+            task = HeartDiseaseTask()
         elif dataset == "iris":
-            ds = IrisClassifierTask()
+            task = IrisClassifierTask()
         elif dataset == "iris_typo":
-            ds = IrisTypoClassifierTask()
+            task = IrisTypoClassifierTask()
         elif dataset == "hover_retrieve_discrete":
-            ds = HoverRetrieveDiscrete()
+            task = HoverRetrieveDiscrete()
         elif dataset == "tweet_metric":
-            ds = TweetMetricTask()
+            task = TweetMetricTask()
         else:
             raise ValueError("Invalid dataset name.")
-        ds.set_splits(TRAIN_NUM=self.TRAIN_NUM, DEV_NUM=self.DEV_NUM, TEST_NUM=self.TEST_NUM)
-        return ds
+        task.set_splits(TRAIN_NUM=self.TRAIN_NUM, DEV_NUM=self.DEV_NUM, TEST_NUM=self.TEST_NUM)
+        return task
 
     # Computes baseline results for a given dataset
     def test_baseline(self, datasets=datasets, test_name="baseline"):
         for dataset in datasets:
             print(f"Testing {dataset} Baseline LM Program...")
-            task = self.load_dataset(dataset)
+            task = self.load_task(dataset)
             dspy.settings.lm.max_tokens = task.get_max_tokens()
 
             evaluate_train = Evaluate(
@@ -222,7 +222,7 @@ class OptimizerTester:
 
     def test_optimizer_default(self, optimizer_function, datasets=datasets, test_name="default"):
         for dataset in datasets:
-            task = self.load_dataset(dataset)
+            task = self.load_task(dataset)
             print(f"Testing  Optimizers on {dataset} ...")
             dspy.settings.lm.max_tokens = task.get_max_tokens()
 
