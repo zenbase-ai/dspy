@@ -9,16 +9,16 @@ from dotenv import load_dotenv
 import dspy
 from dspy.evaluate import Evaluate
 
-from tasks.gsm8k import GSM8KTask
-from tasks.hotpotqa import HotPotQATask
-from tasks.scone import ScoNeTask
-from tasks.tweet import TweetTask
-from tasks.tweet_metric import TweetMetricTask
-from tasks.heart_disease import HeartDiseaseTask
-from tasks.hotpotqa_conditional import HotPotQAConditionalTask
-from tasks.hover import HoverRetrieveDiscrete
-from tasks.iris_typo import IrisTypoClassifierTask
-from tasks.iris import IrisClassifierTask
+from .tasks.gsm8k import GSM8KTask
+from .tasks.hotpotqa import HotPotQATask
+from .tasks.scone import ScoNeTask
+from .tasks.tweet import TweetTask
+from .tasks.tweet_metric import TweetMetricTask
+from .tasks.heart_disease import HeartDiseaseTask
+from .tasks.hotpotqa_conditional import HotPotQAConditionalTask
+from .tasks.hover import HoverRetrieveDiscrete
+from .tasks.iris_typo import IrisTypoClassifierTask
+from .tasks.iris import IrisClassifierTask
 
 datasets = [
     "scone",
@@ -72,9 +72,7 @@ class OptimizerTester:
 
         # Prompt gen model
         if not prompt_model:
-            self.prompt_model = dspy.OpenAI(
-                model=self.PROMPT_MODEL_NAME, max_tokens=700
-            )
+            self.prompt_model = dspy.OpenAI(model=self.PROMPT_MODEL_NAME, max_tokens=700)
         else:
             self.prompt_model = prompt_model
 
@@ -170,9 +168,7 @@ class OptimizerTester:
             ds = TweetMetricTask()
         else:
             raise ValueError("Invalid dataset name.")
-        ds.set_splits(
-            TRAIN_NUM=self.TRAIN_NUM, DEV_NUM=self.DEV_NUM, TEST_NUM=self.TEST_NUM
-        )
+        ds.set_splits(TRAIN_NUM=self.TRAIN_NUM, DEV_NUM=self.DEV_NUM, TEST_NUM=self.TEST_NUM)
         return ds
 
     # Computes baseline results for a given dataset
@@ -246,10 +242,7 @@ class OptimizerTester:
                 },
             )
 
-    def test_optimizer_default(
-        self, optimizer_function, datasets=datasets, test_name="default"
-    ):
-
+    def test_optimizer_default(self, optimizer_function, datasets=datasets, test_name="default"):
         for dataset in datasets:
             task = self.load_dataset(dataset)
             print(f"Testing  Optimizers on {dataset} ...")
@@ -280,9 +273,7 @@ class OptimizerTester:
 
             # Set up the optimizer kwargs
             date_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            log_dir = (
-                "log_dir/" + dataset + "_" + test_name + "_" + date_timestamp + "/"
-            )
+            log_dir = "log_dir/" + dataset + "_" + test_name + "_" + date_timestamp + "/"
             os.makedirs(log_dir, exist_ok=True)
             kwargs = dict(
                 breadth=self.BREADTH,
