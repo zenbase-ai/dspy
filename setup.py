@@ -16,20 +16,19 @@ with open(os.path.join(here, "dspy", "__metadata__.py"), "r", encoding="utf-8") 
 f.close()
 
 
-setup(	
+setup(
     name=metadata["__name__"],
     version=metadata["__version__"],
     description=metadata["__description__"],
     url=metadata["__url__"],
     author=metadata["__author__"],
     author_email=metadata["__author_email__"],
-    long_description=long_description,	
-    long_description_content_type="text/markdown",	
-    license="MIT License",	
-    packages=find_packages(include=["dspy.*", "dspy"]),	
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    license="MIT License",
+    packages=find_packages(include=["dspy.*", "dspy"]),
     python_requires=">=3.9",
-    install_requires=requirements,	
-
+    install_requires=requirements,
     extras_require={
         "chromadb": ["chromadb~=0.4.14"],
         "lancedb": ["lancedb~=0.11.0"],
@@ -41,21 +40,21 @@ setup(
         "faiss-cpu": ["sentence_transformers", "faiss-cpu"],
         "milvus": ["pymilvus~=2.3.7"],
         "google-vertex-ai": ["google-cloud-aiplatform==1.43.0"],
-        "myscale":["clickhouse-connect"],
+        "myscale": ["clickhouse-connect"],
         "snowflake": ["snowflake-snowpark-python"],
         "fastembed": ["fastembed"],
         "groq": ["groq~=0.8.0"],
         "langfuse": ["langfuse~=2.36.1"],
-        "pgvector": ["psycopg2~=2.9.9","pgvector~=0.2.5"],
-        "falkordb": ["falkordb", "redis", "async-timeout"]
+        "pgvector": ["psycopg2~=2.9.9", "pgvector~=0.2.5"],
+        "falkordb": ["falkordb", "redis", "async-timeout"],
     },
-    classifiers=[	
-        "Development Status :: 3 - Alpha",	
-        "Intended Audience :: Science/Research",	
-        "License :: OSI Approved :: MIT License",	
-        "Operating System :: POSIX :: Linux",	
-        "Programming Language :: Python :: 3",	
-        "Programming Language :: Python :: 3.8",	
-        "Programming Language :: Python :: 3.9",	
-    ],	
-)	
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+    ],
+)
