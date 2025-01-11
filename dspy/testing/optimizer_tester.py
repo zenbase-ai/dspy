@@ -45,8 +45,6 @@ class OptimizerTester:
         default_breadth=10,
         default_depth=3,
         default_temperature=1.1,
-        prompt_model_name="gpt-3.5-turbo-1106",
-        task_model_name="meta-llama/Llama-2-13b-chat-hf",
         prompt_model=None,
         task_model=None,
         max_errors=100,
@@ -60,31 +58,11 @@ class OptimizerTester:
         self.BREADTH = default_breadth
         self.DEPTH = default_depth
         self.TEMPERATURE = default_temperature
-        self.PROMPT_MODEL_NAME = prompt_model_name
-        self.TASK_MODEL_NAME = task_model_name
         self.COLBERT_V2_ENDPOINT = colbert_v2_endpoint
         self.MAX_ERRORS = max_errors
 
-        load_dotenv()  # This will load the .env file's variables
-
-        openai.api_key = os.environ.get("OPENAI_API_KEY")
-        openai.api_base = os.environ.get("OPENAI_API_BASE")
-
-        # Prompt gen model
-        if not prompt_model:
-            self.prompt_model = dspy.OpenAI(model=self.PROMPT_MODEL_NAME, max_tokens=700)
-        else:
-            self.prompt_model = prompt_model
-
-        # Task model
-        if not task_model:
-            self.task_model = dspy.HFClientTGI(
-                model=self.TASK_MODEL_NAME,
-                port=[7140, 7141, 7142, 7143],
-                max_tokens=150,
-            )
-        else:
-            self.task_model = task_model
+        self.prompt_model = prompt_model
+        self.task_model = task_model
         self.colbertv2 = dspy.ColBERTv2(url=colbert_v2_endpoint)
 
         dspy.settings.configure(rm=self.colbertv2, lm=self.task_model)
@@ -224,8 +202,8 @@ class OptimizerTester:
                     "test_size": len(task.get_testset()),
                     "task_name": dataset,
                     "signature_optimized": False,
-                    "prompt_model_name": self.PROMPT_MODEL_NAME,
-                    "task_model_name": self.TASK_MODEL_NAME,
+                    "prompt_model_name": self.prompt_model.model,
+                    "task_model_name": self.task_model.model,
                     "breadth": "NA",
                     "depth": "NA",
                     "meta_prompt_style": "default",
