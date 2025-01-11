@@ -18,40 +18,16 @@ class BaseTask(ABC):
         pass
 
     def get_trainset(self, TRAIN_NUM=None):
-        if not hasattr(self, "trainset"):
-            self.load_dataset()
+        return self.trainset[:TRAIN_NUM]
 
-        if TRAIN_NUM:
-            self.TRAIN_NUM = TRAIN_NUM
-            return self.trainset[:TRAIN_NUM]
-        else:
-            return self.trainset[: self.TRAIN_NUM]
+    def get_devset(self, DEV_NUM=None):
+        if hasattr(self, "devset"):
+            return self.devset[:DEV_NUM]
 
-    def get_devset(self, TRAIN_NUM=None, DEV_NUM=None):
-        if not hasattr(self, "trainset"):
-            self.load_dataset()
-
-        if TRAIN_NUM:
-            self.TRAIN_NUM = TRAIN_NUM
-        if DEV_NUM:
-            self.DEV_NUM = DEV_NUM
-
-        index = -1
-        if DEV_NUM and TRAIN_NUM:
-            index = max(len(self.trainset) - DEV_NUM, TRAIN_NUM)
-        else:
-            index = max(len(self.trainset) - self.DEV_NUM, self.TRAIN_NUM)
-        return self.trainset[index:]
+        return self.trainset[-DEV_NUM:]
 
     def get_testset(self, TEST_NUM=None):
-        if not hasattr(self, "testset"):
-            self.load_dataset()
-
-        if TEST_NUM:
-            self.TEST_NUM = TEST_NUM
-            return self.testset[:TEST_NUM]
-        else:
-            return self.testset[: self.TEST_NUM]
+        return self.testset[:TEST_NUM]
 
     def set_splits(self, TRAIN_NUM=None, DEV_NUM=None, TEST_NUM=None):
         if TRAIN_NUM:

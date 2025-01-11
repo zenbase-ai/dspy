@@ -71,15 +71,6 @@ class GSM8KTask(BaseTask):
         self.devset = devset
         self.testset = testset
 
-    def get_trainset(self, TRAIN_NUM=None):
-        return self.trainset[:TRAIN_NUM]
-
-    def get_testset(self, TEST_NUM=None):
-        return self.testset[:TEST_NUM]
-
-    def get_devset(self, DEV_NUM=None):
-        return self.devset[:DEV_NUM]
-
     def get_program(self):
         return CoT()
 

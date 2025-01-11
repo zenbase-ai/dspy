@@ -2,9 +2,7 @@ import random
 
 import tqdm
 from datasets import load_dataset
-import pandas as pd
 import dspy
-from dspy.dsp.utils.utils import deduplicate
 from dspy.evaluate import Evaluate
 
 from .base_task import BaseTask

@@ -77,15 +77,6 @@ class ScoNeTask(BaseTask):
         # 1000 random train, 500 random dev:
         self.trainset, self.testset = all_train[:1000], all_train[1000:1500]
 
-    def get_trainset(self, TRAIN_NUM=None):
-        return self.trainset[:TRAIN_NUM]
-
-    def get_testset(self, TEST_NUM=None):
-        return self.testset[:TEST_NUM]
-
-    def get_devset(self, DEV_NUM=None):
-        return self.trainset[len(self.trainset) - DEV_NUM :]
-
     def get_program(self):
         return ScoNeCoT()
 
