@@ -4,7 +4,7 @@ import tqdm
 from datasets import load_dataset
 import pandas as pd
 import dspy
-from dsp.utils.utils import deduplicate
+from dspy.dsp.utils.utils import deduplicate
 from dspy.evaluate import Evaluate
 
 from .base_task import BaseTask
@@ -43,21 +43,15 @@ class RetrieveMultiHop(dspy.Module):
     def forward(self, claim):
         # HOP 1
         hop1_docs = self.retrieve_k(claim).passages
-        summary_1 = self.summarize1(
-            claim=claim, passages=hop1_docs
-        ).summary  # Summarize top k docs
+        summary_1 = self.summarize1(claim=claim, passages=hop1_docs).summary  # Summarize top k docs
 
         # HOP 2
         hop2_query = self.create_query_hop2(claim=claim, summary_1=summary_1).query
         hop2_docs = self.retrieve_k(hop2_query).passages
-        summary_2 = self.summarize2(
-            claim=claim, context=summary_1, passages=hop2_docs
-        ).summary
+        summary_2 = self.summarize2(claim=claim, context=summary_1, passages=hop2_docs).summary
 
         # HOP 3
-        hop3_query = self.create_query_hop3(
-            claim=claim, summary_1=summary_1, summary_2=summary_2
-        ).query
+        hop3_query = self.create_query_hop3(claim=claim, summary_1=summary_1, summary_2=summary_2).query
         hop3_docs = self.retrieve_k(hop3_query).passages
 
         return dspy.Prediction(retrieved_docs=hop1_docs + hop2_docs + hop3_docs)
@@ -79,9 +73,7 @@ class HoverRetrieveDiscrete(BaseTask):
             label = example["label"]
 
             if count_unique_docs(example) == 3:  # Limit to 3 hop examples
-                reformatted_hf_trainset.append(
-                    dict(claim=claim, supporting_facts=supporting_facts, label=label)
-                )
+                reformatted_hf_trainset.append(dict(claim=claim, supporting_facts=supporting_facts, label=label))
 
         for example in tqdm.tqdm(hf_testset):
             claim = example["claim"]
@@ -89,9 +81,7 @@ class HoverRetrieveDiscrete(BaseTask):
             label = example["label"]
 
             if count_unique_docs(example) == 3:
-                reformatted_hf_testset.append(
-                    dict(claim=claim, supporting_facts=supporting_facts, label=label)
-                )
+                reformatted_hf_testset.append(dict(claim=claim, supporting_facts=supporting_facts, label=label))
 
         rng = random.Random(0)
         rng.shuffle(reformatted_hf_trainset)
