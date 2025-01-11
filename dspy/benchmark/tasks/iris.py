@@ -73,14 +73,5 @@ class IrisClassifierTask(BaseTask):
     def get_handwritten_prompts(self):
         return []
 
-    def get_trainset(self, TRAIN_NUM=None):
-        return self.trainset
-
-    def get_testset(self):
-        return self.testset
-
-    def get_devset(self, TRAIN_NUM=None, DEV_NUM=None):
-        return self.trainset
-
     def get_evalset(self, EVAL_NUM=None):
         return self.testset
