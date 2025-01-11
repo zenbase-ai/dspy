@@ -1,4 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import Callable
+
+from dspy import Program
 
 
 class BaseTask(ABC):
@@ -10,11 +13,11 @@ class BaseTask(ABC):
         pass
 
     @abstractmethod
-    def get_program(self):
+    def get_program(self) -> Program:
         pass
 
     @abstractmethod
-    def get_metric(self):
+    def get_metric(self) -> Callable:
         pass
 
     def get_trainset(self, TRAIN_NUM=None):
