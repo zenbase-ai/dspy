@@ -45,7 +45,12 @@ class SemanticF1(dspy.Module):
             self.module = dspy.ChainOfThought(SemanticRecallPrecision)
 
     def forward(self, example, pred, trace=None):
-        scores = self.module(question=example.question, ground_truth=example.response, system_response=pred.response)
+        # if there is response let's get example.response for ground truth else let's get the example.answer
+        ground_truth = example.response if hasattr(example, "response") else example.answer
+        # same for the system_response
+        system_response = pred.response if hasattr(pred, "response") else pred.answer
+
+        scores = self.module(question=example.question, ground_truth=ground_truth, system_response=system_response)
         score = f1_score(scores.precision, scores.recall)
 
         return score if trace is None else score >= self.threshold

@@ -1,6 +1,6 @@
 import dspy
 from dspy.datasets import HotPotQA
-from dspy.evaluate import Evaluate
+from dspy.evaluate import Evaluate, SemanticF1
 
 from .base_task import BaseTask
 
@@ -26,8 +26,8 @@ class MultiHop(dspy.Module):
 class HotPotQATask(BaseTask):
     def __init__(self):
         # Set up metrics
-        metric_EM = dspy.evaluate.answer_exact_match
-        self.metric = metric_EM
+        metric_SemanticF1 = SemanticF1()
+        self.metric = metric_SemanticF1
 
         self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)
 
