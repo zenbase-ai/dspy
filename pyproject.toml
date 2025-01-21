@@ -40,7 +40,7 @@ dependencies = [
     "pydantic~=2.0",
     "jinja2",
     "magicattr~=0.1.6",
-    "litellm==1.57.4",
+    "litellm==1.59.1",
     "diskcache",
     "json-repair",
     "tenacity>=8.2.3",
