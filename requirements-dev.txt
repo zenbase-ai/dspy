@@ -1,4 +1,4 @@
-black==24.2.0
+black==24.3.0
 datamodel-code-generator==0.26.3
 litellm[proxy]==1.53.7
 pillow==10.4.0
