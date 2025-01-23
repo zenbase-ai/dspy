@@ -1,4 +1,5 @@
 import random
+from concurrent.futures import ThreadPoolExecutor
 
 from dspy.evaluate.evaluate import Evaluate
 from dspy.teleprompt.teleprompt import Teleprompter
@@ -57,55 +58,25 @@ class BootstrapFewShotWithRandomSearch(Teleprompter):
         self.trainset = trainset
         self.valset = valset or trainset  # TODO: FIXME: Note this choice.
 
+        programs = []
+        with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
+            for seed in range(-3, self.num_candidate_sets):
+                if (restrict is not None) and (seed not in restrict):
+                    continue
+
+                executor.submit(
+                    self._build_a_candidate,
+                    programs,
+                    labeled_sample,
+                    seed,
+                    student,
+                    teacher
+                )
+
         scores = []
         all_subscores = []
         score_data = []
-
-        for seed in range(-3, self.num_candidate_sets):
-            if (restrict is not None) and (seed not in restrict):
-                continue
-
-            trainset_copy = list(self.trainset)
-
-            if seed == -3:
-                # zero-shot
-                program = student.reset_copy()
-
-            elif seed == -2:
-                # labels only
-                teleprompter = LabeledFewShot(k=self.max_labeled_demos)
-                program = teleprompter.compile(student, trainset=trainset_copy, sample=labeled_sample)
-
-            elif seed == -1:
-                # unshuffled few-shot
-                optimizer = BootstrapFewShot(
-                    metric=self.metric,
-                    metric_threshold=self.metric_threshold,
-                    max_bootstrapped_demos=self.max_num_samples,
-                    max_labeled_demos=self.max_labeled_demos,
-                    teacher_settings=self.teacher_settings,
-                    max_rounds=self.max_rounds,
-                    max_errors=self.max_errors,
-                )
-                program = optimizer.compile(student, teacher=teacher, trainset=trainset_copy)
-
-            else:
-                assert seed >= 0, seed
-
-                random.Random(seed).shuffle(trainset_copy)
-                size = random.Random(seed).randint(self.min_num_samples, self.max_num_samples)
-
-                optimizer = BootstrapFewShot(
-                    metric=self.metric,
-                    metric_threshold=self.metric_threshold,
-                    max_bootstrapped_demos=size,
-                    max_labeled_demos=self.max_labeled_demos,
-                    teacher_settings=self.teacher_settings,
-                    max_rounds=self.max_rounds,
-                    max_errors=self.max_errors,
-                )
-
-                program = optimizer.compile(student, teacher=teacher, trainset=trainset_copy)
+        for program in programs:
 
             evaluate = Evaluate(
                 devset=self.valset,
@@ -118,7 +89,6 @@ class BootstrapFewShotWithRandomSearch(Teleprompter):
 
             score, subscores = evaluate(program, return_all_scores=True)
             program.score = score
-
             all_subscores.append(subscores)
 
             ############ Assertion-aware Optimization ############
@@ -128,27 +98,74 @@ class BootstrapFewShotWithRandomSearch(Teleprompter):
                 score = 0 if program._assert_failures > 0 else score
             ######################################################
 
-            if len(scores) == 0 or score > max(scores):
-                print("New best score:", score, "for seed", seed)
+            if score > max(scores, default=-1):
                 best_program = program
 
             scores.append(score)
-            print(f"Scores so far: {scores}")
-            print(f"Best score so far: {max(scores)}")
-
             score_data.append((score, subscores, seed, program))
 
-            if self.stop_at_score is not None and score >= self.stop_at_score:
-                print(f"Stopping early because score {score} is >= stop_at_score {self.stop_at_score}")
-                break
+            # if self.stop_at_score is not None and score >= self.stop_at_score:
+            #     print(f"Stopping early because score {score} is >= stop_at_score {self.stop_at_score}")
+            #     break
 
         # To best program, attach all program candidates in decreasing average score
         best_program.candidate_programs = score_data
         best_program.candidate_programs = sorted(best_program.candidate_programs, key=lambda x: x[0], reverse=True)
 
+        print("Best Score: {}".format(best_program.score))
         print(f"{len(best_program.candidate_programs)} candidate programs found.")
 
         return best_program
+
+    def _build_a_candidate(self,
+                           programs,
+                           labeled_sample,
+                           seed,
+                           student,
+                           teacher):
+
+        trainset_copy = list(self.trainset)
+        if seed == -3:
+            # zero-shot
+            program = student.reset_copy()
+
+        elif seed == -2:
+            # labels only
+            teleprompter = LabeledFewShot(k=self.max_labeled_demos)
+            program = teleprompter.compile(student, trainset=trainset_copy, sample=labeled_sample)
+
+        elif seed == -1:
+            # unshuffled few-shot
+            optimizer = BootstrapFewShot(
+                metric=self.metric,
+                metric_threshold=self.metric_threshold,
+                max_bootstrapped_demos=self.max_num_samples,
+                max_labeled_demos=self.max_labeled_demos,
+                teacher_settings=self.teacher_settings,
+                max_rounds=self.max_rounds,
+                max_errors=self.max_errors,
+            )
+            program = optimizer.compile(student, teacher=teacher, trainset=trainset_copy)
+
+        else:
+            assert seed >= 0, seed
+
+            random.Random(seed).shuffle(trainset_copy)
+            size = random.Random(seed).randint(self.min_num_samples, self.max_num_samples)
+
+            optimizer = BootstrapFewShot(
+                metric=self.metric,
+                metric_threshold=self.metric_threshold,
+                max_bootstrapped_demos=size,
+                max_labeled_demos=self.max_labeled_demos,
+                teacher_settings=self.teacher_settings,
+                max_rounds=self.max_rounds,
+                max_errors=self.max_errors,
+            )
+
+            program = optimizer.compile(student, teacher=teacher, trainset=trainset_copy)
+
+        programs.append(program)
 
 
 # sample between 4 and 10 examples from traces
