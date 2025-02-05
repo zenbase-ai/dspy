@@ -13,6 +13,8 @@ def count_unique_docs(example):
 
 
 def discrete_retrieval_eval(example, pred, trace=None):
+    retrieved_docs = pred["hop1_docs"] + pred["hop2_docs"] + pred["hop3_docs"]
+
     gold_titles = set(
         map(
             dspy.evaluate.normalize_text,
@@ -22,7 +24,7 @@ def discrete_retrieval_eval(example, pred, trace=None):
     found_titles = set(
         map(
             dspy.evaluate.normalize_text,
-            [c.split(" | ")[0] for c in pred.retrieved_docs],
+            [c.split(" | ")[0] for c in retrieved_docs],
         )
     )
     return gold_titles.issubset(found_titles)
@@ -52,7 +54,16 @@ class RetrieveMultiHop(dspy.Module):
         hop3_query = self.create_query_hop3(claim=claim, summary_1=summary_1, summary_2=summary_2).query
         hop3_docs = self.retrieve_k(hop3_query).passages
 
-        return dspy.Prediction(retrieved_docs=hop1_docs + hop2_docs + hop3_docs)
+        return {
+            "hop1_docs": hop1_docs,
+            "summary_1": summary_1,
+            "hop2_query": hop2_query,
+            "hop2_docs": hop2_docs,
+            "summary_2": summary_2,
+            "hop3_query": hop3_query,
+            "hop3_docs": hop3_docs,
+        }
+        # return dspy.Prediction(retrieved_docs=hop1_docs + hop2_docs + hop3_docs)
 
 
 class HoverRetrieveDiscrete(BaseTask):
