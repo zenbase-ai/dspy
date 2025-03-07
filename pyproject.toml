@@ -48,6 +48,9 @@ dependencies = [
     "asyncer==0.0.8",
     "cachetools",
     "cloudpickle",
+    "wandb>=0.19.7",
+    "weave>=0.51.36",
+    "python-dotenv>=1.0.1",
 ]
 
 [project.optional-dependencies]

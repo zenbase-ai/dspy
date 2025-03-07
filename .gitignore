@@ -63,3 +63,6 @@ docs/docs/**/*.json*
 *.index
 *.pkl
 *.tar.gz
+
+requirements-dev.lock
+requirements.lock
