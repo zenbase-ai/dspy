@@ -20,7 +20,7 @@ def discrete_retrieval_eval(example, pred, trace=None):
             [c.split(" | ")[0] for c in retrieved_docs],
         )
     )
-    return gold_titles.issubset(found_titles)
+    return gold_titles.issubset(found_titles), found_titles, gold_titles
 
 
 class HoverRetrieveProgram(dspy.Module):
@@ -34,7 +34,8 @@ class HoverRetrieveProgram(dspy.Module):
             """Identify Key Entities
 Replace specific names (people, places, organizations) with abstract variables (e.g., A, B, X, Y).
 If an entity is defined by another entity or attribute (e.g., “the band that released The Balcony”), assign it a function (e.g., B = f(X)).
-Define relationships between entities as you identify them (e.g., R(A, B) for "A has a relationship with B")."""
+Define relationships between entities as you identify them (e.g., R(A, B) for "A has a relationship with B").
+Output all the definitions and relationships in the definitions_and_relationships field and make sure it's self-contained."""
         )
 
         self.assumptions = dspy.ChainOfThoughtInstructed(

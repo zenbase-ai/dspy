@@ -10,7 +10,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 from dspy import ColBERTv2
 from datasets import load_dataset
-from hover_retrieve_discrete import HoverRetrieveProgram, discrete_retrieval_eval
+from hover_retrieve_discrete import HoverRetrieveProgram, discrete_retrieval_eval as discrete_eval
+from hover_divide_and_conquer import HoverDivideAndConquerProgram, discrete_retrieval_eval as divide_conquer_eval
 
 
 def load_hover_dataset(num_examples=100, filter_3hop=True):
@@ -74,20 +75,21 @@ def summarize_prediction(prediction):
 
 
 @weave.op()
-def run_single_example(program, example, verbose=False):
+def run_single_example(program, example, eval_func, verbose=False):
     """
     Run a single example through the program and evaluate it.
     
     Args:
-        program: The HoverRetrieveProgram instance
+        program: The program instance to run
         example: A single dspy.Example to process
+        eval_func: The evaluation function to use
         verbose: Whether to print detailed output
 
     Returns:
         evaluation_result
     """
     prediction = program(example.claim)
-    evaluation = discrete_retrieval_eval(example, prediction)
+    evaluation, found_titles, gold_titles = eval_func(example, prediction)
 
     if verbose:
         print()
@@ -102,25 +104,53 @@ def run_single_example(program, example, verbose=False):
     return evaluation
 
 
+def run_program(program_class, eval_func, examples, num_threads=20, verbose=False):
+    """Run a program on all examples using multiple threads."""
+    program = program_class()
+    
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        results = list(executor.map(
+            partial(run_single_example, program, eval_func=eval_func, verbose=verbose), 
+            examples
+        ))
+    
+    num_correct = sum([1 for result in results if result])
+    accuracy = 100. * num_correct / len(examples)
+    
+    return num_correct, accuracy
+
+
 if __name__ == "__main__":
     MODEL = "gpt-4o-mini"
     COLBERT_V2_ENDPOINT = "http://20.102.90.50:2017/wiki17_abstracts"
-    NUM_EXAMPLES = 200
-    NUM_THREADS = 1
-    VERBOSE = False
+    NUM_EXAMPLES = 1
+    NUM_THREADS = 20
+    VERBOSE = True
 
     load_dotenv()
     weave.init(project_name="hover-retrieve-program")
 
+    # Set up models
     lm = dspy.LM(model=MODEL)
     retriever = ColBERTv2(url=COLBERT_V2_ENDPOINT)
     dspy.settings.configure(lm=lm, rm=retriever)
 
+    # Load dataset
     examples = load_hover_dataset(num_examples=NUM_EXAMPLES)
-    program = HoverRetrieveProgram()
 
-    with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-        results = list(executor.map(partial(run_single_example, program, verbose=VERBOSE), examples))
+    # Run both programs
+    programs = [
+        # ("Discrete Retrieval", HoverRetrieveProgram, discrete_eval),
+        ("Divide and Conquer", HoverDivideAndConquerProgram, divide_conquer_eval)
+    ]
 
-    num_correct_predictions = sum([1 for result in results if result])
-    print(f"{num_correct_predictions} Examples out of {NUM_EXAMPLES} were correctly retrieved: {100. * num_correct_predictions/NUM_EXAMPLES}% accurate")
+    for name, program_class, eval_func in programs:
+        print(f"\nRunning {name} program...")
+        num_correct, accuracy = run_program(
+            program_class, 
+            eval_func,
+            examples, 
+            num_threads=NUM_THREADS, 
+            verbose=VERBOSE
+        )
+        print(f"{num_correct} Examples out of {NUM_EXAMPLES} were correctly retrieved: {accuracy:.2f}% accurate")
