@@ -121,7 +121,7 @@ def run_program(program_class, eval_func, examples, num_threads=20, verbose=Fals
 
 
 if __name__ == "__main__":
-    MODEL = "gpt-4o-mini"
+    MODEL = "o3-mini"
     COLBERT_V2_ENDPOINT = "http://20.102.90.50:2017/wiki17_abstracts"
     NUM_EXAMPLES = 1
     NUM_THREADS = 20

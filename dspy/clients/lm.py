@@ -92,6 +92,11 @@ class LM(BaseLM):
         messages = messages or [{"role": "user", "content": prompt}]
         kwargs = {**self.kwargs, **kwargs}
 
+        if self.model == "o3-mini":
+            # kwargs['max_completion_tokens'] = kwargs.pop("max_tokens")
+            kwargs.pop("max_tokens")
+            kwargs.pop("temperature")
+
         # Make the request and handle LRU & disk caching.
         if self.model_type == "chat":
             completion = cached_litellm_completion if cache else litellm_completion
