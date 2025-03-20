@@ -1,4 +1,6 @@
 import functools
+import sys
+from time import sleep
 from typing import Any, List, Optional, Union
 
 import requests
@@ -52,6 +54,16 @@ def colbertv2_get_request_v2(url: str, query: str, k: int):
 @functools.cache
 @NotebookCacheMemory.cache
 def colbertv2_get_request_v2_wrapped(*args, **kwargs):
+    max_retries = kwargs.pop("max_retries", 5)
+    backoff_factor = kwargs.pop("backoff_factor", 0.2)
+
+    for i in range(max_retries - 1):
+        try:
+            return colbertv2_get_request_v2(*args, **kwargs)
+        except KeyError as e:
+            print(f"Colbertv2: RequestException: {e}", file=sys.stderr)
+            sleep(backoff_factor * 2 ** i)
+
     return colbertv2_get_request_v2(*args, **kwargs)
 
 
